@@ -1,9 +1,11 @@
 from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
+from app.core import config, tasks
 from app.api.routes import router as api_router
 
+
 def get_application():
-    app = FastAPI(title="Phresh", version="1.0.0")
+    app = FastAPI(title=config.PROJECT_NAME, version=config.VERSION)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -12,8 +14,10 @@ def get_application():
         allow_headers=["*"],
     )
 
+    # startup이랑 shotdown은 predefine event인 듯 하다.
+    app.add_event_handler("startup", tasks.create_start_app_handler(app))
+    app.add_event_handler("shutdown", tasks.create_stop_app_handler(app))
     app.include_router(api_router, prefix="/api")
-
     return app
 
 
